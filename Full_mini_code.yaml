@@ -9,26 +9,15 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
-
-  Ec2Instance:
-    Type: 'AWS::EC2::Instance'
-    Properties:
-      SecurityGroups:
-        - !Ref InstanceSecurityGroup
-      KeyName: chandan	
-      ImageId: ami-0287a05f0ef0e9d9a
-      InstanceType: t2.micro
-      Tags:
-       - Key: Name
-         Value: My-ec2
+      VpcId: !Ref MyVPC
 
   MyVPC:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: "10.0.0.0/16"
       Tags:
-       - Key: Name
-         Value: My-ec2
+        - Key: Name
+          Value: My-ec2
 
   PublicSubnet:
     Type: AWS::EC2::Subnet
@@ -42,3 +31,16 @@ Resources:
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: "10.0.2.0/24"
+
+  Ec2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      SecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      SubnetId: !Ref PublicSubnet
+      Tags:
+        - Key: Name
+          Value: My-ec2
