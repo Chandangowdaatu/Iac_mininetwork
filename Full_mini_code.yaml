@@ -1,8 +1,8 @@
 Resources:
-  InstanceSecurityGroup:
+  InstanceSecurityGroup1:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: Enable SSH access via port 22
+      GroupDescription: Enable SSH and HTTP access
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -12,6 +12,17 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
+      VpcId: !Ref MyVPC
+
+  InstanceSecurityGroup2:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access for specific IP
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.1.10/32
       VpcId: !Ref MyVPC
 
   MyVPC:
@@ -80,8 +91,32 @@ Resources:
           sudo service nginx start
       NetworkInterfaces:
         - GroupSet:
-            - !Ref InstanceSecurityGroup
+            - !Ref InstanceSecurityGroup1
           AssociatePublicIpAddress: true
           SubnetId: !Ref PublicSubnet
           DeviceIndex: 0
           PrivateIpAddress: '10.0.1.10'
+
+  Ec2Instance2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Private_Frontend_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y 
+          sudo apt install nginx -y
+          sudo service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup2
+          SubnetId: !Ref PrivateSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.2.10'
+
+
