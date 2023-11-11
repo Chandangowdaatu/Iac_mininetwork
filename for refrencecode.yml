@@ -1,9 +1,26 @@
-AWSTemplateFormatVersion: "2010-09-09"
 Resources:
+  InstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref MyVPC
+
   MyVPC:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: "10.0.0.0/16"
+      Tags:
+        - Key: Name
+          Value: My-ec2
 
   PublicSubnet:
     Type: AWS::EC2::Subnet
@@ -46,48 +63,48 @@ Resources:
       SubnetId: !Ref PublicSubnet
       RouteTableId: !Ref PublicRouteTable
 
-  PrivateRouteTable:
-    Type: AWS::EC2::RouteTable
+  Ec2Instance1:
+    Type: 'AWS::EC2::Instance'
     Properties:
-      VpcId: !Ref MyVPC
-
-  PrivateRoute:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable
-      DestinationCidrBlock: "0.0.0.0/0"
-      NatGatewayId: <your-nat-gateway-id>  # Add your NAT Gateway ID here
-
-  AssociatePrivateSubnetRouteTable:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PrivateSubnet
-      RouteTableId: !Ref PrivateRouteTable
-
-  MyInstance1:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: <your-ami-id>  # Add your AMI ID here
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
       InstanceType: t2.micro
-      SubnetId: !Ref PublicSubnet
+      Tags:
+        - Key: Name
+          Value: Frontend-Appication
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y 
+          sudo apt install nginx -y
+          sudo service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup
+          AssociatePublicIpAddress: false
+          SubnetId: !Ref PublicSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.1.10'
 
-  MyInstance2:
-    Type: AWS::EC2::Instance
+  Ec2Instance2:
+    Type: 'AWS::EC2::Instance'
     Properties:
-      ImageId: <your-ami-id>  # Add your AMI ID here
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
       InstanceType: t2.micro
-      SubnetId: !Ref PublicSubnet
-
-  MyInstance3:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: <your-ami-id>  # Add your AMI ID here
-      InstanceType: t2.micro
-      SubnetId: !Ref PrivateSubnet
-
-  MyInstance4:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: <your-ami-id>  # Add your AMI ID here
-      InstanceType: t2.micro
-      SubnetId: !Ref PrivateSubnet
+      Tags:
+        - Key: Name
+          Value: Frontend-Appication
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y 
+          sudo apt install nginx -y
+          sudo service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup
+          AssociatePublicIpAddress: false
+          SubnetId: !Ref PublicSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.1.11'
