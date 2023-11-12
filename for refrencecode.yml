@@ -1,8 +1,8 @@
 Resources:
-  InstanceSecurityGroup:
+  InstanceSecurityGroup1:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: Enable SSH access via port 22
+      GroupDescription: Enable SSH and HTTP access
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -14,19 +14,59 @@ Resources:
           CidrIp: 0.0.0.0/0
       VpcId: !Ref MyVPC
 
+  InstanceSecurityGroup2:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access for specific IP
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.1.10/32
+      VpcId: !Ref MyVPC
+
+  InstanceSecurityGroup3:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access for specific IP
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.1.10/32
+      VpcId: !Ref MyVPC 
+    
+  InstanceSecurityGroup4:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access for specific IP
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.1.10/32
+      VpcId: !Ref MyVPC
+
   MyVPC:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: "10.0.0.0/16"
       Tags:
         - Key: Name
-          Value: My-ec2
+          Value: My-VPC
 
-  PublicSubnet:
+  PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: "10.0.1.0/24"
+      MapPublicIpOnLaunch: true
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "10.0.3.0/24"
       MapPublicIpOnLaunch: true
 
   PrivateSubnet:
@@ -57,31 +97,152 @@ Resources:
       DestinationCidrBlock: "0.0.0.0/0"
       GatewayId: !Ref MyInternetGateway
 
-  AssociatePublicSubnetRouteTable:
+  AssociatePublicSubnetRouteTable1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PublicSubnet
+      SubnetId: !Ref PublicSubnet1
       RouteTableId: !Ref PublicRouteTable
 
-Ec2Instance2:
-  Type: 'AWS::EC2::Instance'
-  Properties:
-    KeyName: chandan  
-    ImageId: ami-0287a05f0ef0e9d9a
-    InstanceType: t2.micro
-    Tags:
-      - Key: Name
-        Value: Private-Application-Server
-    UserData:
-      Fn::Base64: !Sub |
-        #!/bin/bash
-        sudo apt update -y 
-        sudo apt install nginx -y
-        sudo service nginx start
-    NetworkInterfaces:
-      - GroupSet:
-          - !Ref InstanceSecurityGroup2
-        SubnetId: !Ref PrivateSubnet
-        DeviceIndex: 0
-        PrivateIpAddress: '10.0.2.10'
+  AssociatePublicSubnetRouteTable2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
 
+  Ec2Instance1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Jump_or_Bastion_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y 
+          sudo apt install nginx -y
+          sudo service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup1
+          AssociatePublicIpAddress: true
+          SubnetId: !Ref PublicSubnet1
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.1.10'
+
+  Ec2Instance2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Private_Frontend_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y 
+          sudo apt install nginx -y
+          sudo service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup2
+          SubnetId: !Ref PrivateSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.2.10'
+
+  Ec2Instance3:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Private_Backend_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y 
+          sudo apt install nginx -y
+          sudo service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup3
+          SubnetId: !Ref PrivateSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.2.20'
+
+  Ec2Instance4:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Private_Mongo_Database_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y 
+          sudo apt install nginx -y
+          sudo service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup4
+          SubnetId: !Ref PrivateSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.2.30'
+
+Resources:
+  # ... (Your existing resources)
+
+  TargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: "/health"
+      HealthCheckProtocol: "HTTP"
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: "200"
+      Port: 80
+      Protocol: "HTTP"
+      TargetType: "instance"
+      VpcId: !Ref MyVPC
+
+  LoadBalancer:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2 
+      SecurityGroups: [!Ref InstanceSecurityGroup1]
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '60'
+      Name: MyLoadBalancer
+      Scheme: internet-facing
+
+  LoadBalancerListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: 'forward'
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  LoadBalancerTargetGroupAttachment:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroupAttachment'
+    Properties:
+      TargetGroupArn: !Ref TargetGroup
+      Targets:
+        - Id: !Ref Ec2Instance1
