@@ -23,6 +23,10 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: 10.0.1.10/32
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref InstanceSecurityGroup5
       VpcId: !Ref MyVPC
 
   InstanceSecurityGroup3:
@@ -45,6 +49,17 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: 10.0.1.10/32
+      VpcId: !Ref MyVPC
+
+  InstanceSecurityGroup5:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable access for 0.0.0.0
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
       VpcId: !Ref MyVPC
 
   MyVPC:
@@ -217,15 +232,16 @@ Resources:
       TargetType: "instance"
       VpcId: !Ref MyVPC
       Targets:
-        - Id: !Ref Ec2Instance1
+        - Id: !Ref Ec2Instance2
 
   LoadBalancer:
     Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
     Properties:
       Subnets:
         - !Ref PublicSubnet1
-        - !Ref PublicSubnet2 
-      SecurityGroups: [!Ref InstanceSecurityGroup1]
+        - !Ref PrivateSubnet
+
+      SecurityGroups: [!Ref InstanceSecurityGroup5]
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
           Value: '60'
