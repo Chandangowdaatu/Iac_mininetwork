@@ -1,0 +1,11 @@
+Resources:
+  LoadBalancerDNSName:
+    Type: 'AWS::Route53::RecordSet'
+    Properties:
+      HostedZoneId: "Z01388562BBMIIZM7ZXWY"
+      Name: miniproject.apoorvahr.live
+      Type: A
+      AliasTarget:
+        HostedZoneId: "Z01388562BBMIIZM7ZXWY"
+        DNSName: !GetAtt 'LoadBalancer.DNSName'
+        HostedZoneId: "ZP97RAFLXTNZK"

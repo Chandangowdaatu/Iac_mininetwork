@@ -1,0 +1,89 @@
+Resources:
+  Ec2Instance1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Jump_or_Bastion_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y 
+          sudo apt install nginx -y
+          sudo service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup1
+          AssociatePublicIpAddress: true
+          SubnetId: !Ref PublicSubnet1
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.1.10'
+
+  Ec2Instance2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Private_Frontend_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y 
+          sudo apt install nginx -y
+          sudo systemctl start nginx
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup2
+          SubnetId: !Ref PrivateSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.2.10'
+
+  Ec2Instance3:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Private_Backend_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y 
+          sudo apt install nginx -y
+          sudo service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup3
+          SubnetId: !Ref PrivateSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.2.20'
+
+  Ec2Instance4:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Private_Mongo_Database_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo apt update -y 
+          sudo apt install nginx -y
+          sudo service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup4
+          SubnetId: !Ref PrivateSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.2.30'
