@@ -78,14 +78,6 @@ Resources:
       AvailabilityZone: "ap-south-1a"
       MapPublicIpOnLaunch: true
 
-  PublicSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref MyVPC
-      CidrBlock: "10.0.3.0/24"
-      AvailabilityZone: "ap-south-1c"
-      MapPublicIpOnLaunch: true
-
   PrivateSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -148,12 +140,6 @@ Resources:
       SubnetId: !Ref PublicSubnet1
       RouteTableId: !Ref PublicRouteTable
 
-  AssociatePublicSubnetRouteTable2:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet2
-      RouteTableId: !Ref PublicRouteTable
-
   Ec2Instance1:
     Type: 'AWS::EC2::Instance'
     Properties:
@@ -166,9 +152,9 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          sudo apt update -y 
-          sudo apt install nginx -y
-          sudo service nginx start
+          apt update -y 
+          apt install nginx -y
+          service nginx start
       NetworkInterfaces:
         - GroupSet:
             - !Ref InstanceSecurityGroup1
@@ -189,9 +175,9 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          sudo apt update -y 
-          sudo apt install nginx -y
-          sudo systemctl start nginx
+          apt update -y 
+          apt install apache2
+          service apache2 start
       NetworkInterfaces:
         - GroupSet:
             - !Ref InstanceSecurityGroup2
@@ -211,9 +197,9 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          sudo apt update -y 
-          sudo apt install nginx -y
-          sudo service nginx start
+          apt update -y 
+          apt install nginx -y
+          service nginx start
       NetworkInterfaces:
         - GroupSet:
             - !Ref InstanceSecurityGroup3
@@ -233,9 +219,9 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          sudo apt update -y 
-          sudo apt install nginx -y
-          sudo service nginx start
+          apt update -y 
+          apt install nginx -y
+          service nginx start
       NetworkInterfaces:
         - GroupSet:
             - !Ref InstanceSecurityGroup4
@@ -266,7 +252,6 @@ Resources:
     Properties:
       Subnets:
         - !Ref PublicSubnet1
-        - !Ref PublicSubnet2
         - !Ref PrivateSubnet
 
       SecurityGroups: [!Ref InstanceSecurityGroup5]
