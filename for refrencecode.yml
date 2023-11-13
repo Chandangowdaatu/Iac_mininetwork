@@ -246,3 +246,89 @@ Resources:
       TargetGroupArn: !Ref TargetGroup
       Targets:
         - Id: !Ref Ec2Instance1
+LoadBalancerTargetGroupAttachment:
+  Type: 'AWS::ElasticLoadBalancingV2::TargetGroupAttachment'
+  Properties:
+    TargetGroupArn: !Ref TargetGroup
+    Targets:
+      - Id: !Ref Ec2Instance1
+
+Resources:
+  NatGatewayEIP:
+    Type: AWS::EC2::EIP
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "10.0.2.0/24"
+      AvailabilityZone: "ap-south-1b"
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+
+PrivateSubnet:
+  Type: AWS::EC2::Subnet
+  Properties:
+    VpcId: !Ref MyVPC
+    CidrBlock: "10.0.2.0/24"
+    AvailabilityZone: "ap-south-1b"
+
+PrivateSubnetRouteTableAssociation:
+  Type: AWS::EC2::SubnetRouteTableAssociation
+  Properties:
+    SubnetId: !Ref PrivateSubnet
+    RouteTableId: !Ref PrivateRouteTable
+LoadBalancerDNSName:
+  Type: 'AWS::Route53::RecordSet'
+  Properties:
+    HostedZoneId: "your-hosted-zone-id"
+    Name: "your.domain.com"
+    Type: A
+    AliasTarget:
+      DNSName: !GetAtt LoadBalancer.DNSName
+      EvaluateTargetHealth: false
+      HostedZoneId: "your-load-balancer-hosted-zone-id"
+
+LoadBalancerDNSName:
+  Type: 'AWS::Route53::RecordSet'
+  Properties:
+    HostedZoneId: "Z01388562BBMIIZM7ZXWY"
+    Name: "miniproject.apoorvahr.live"
+    Type: A
+    AliasTarget:
+      DNSName: !GetAtt LoadBalancer.DNSName
+      EvaluateTargetHealth: false
+      HostedZoneId: !Ref LoadBalancer
+
+
+
+        myDNS:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: apoorvahr.live.
+      Comment: Zone apex alias targeted to myELB LoadBalancer.
+      RecordSets:
+      - Name: miniproject.apoorvahr.live	
+      Type: A
+      AliasTarget:
+        HostedZoneId: "Z01388562BBMIIZM7ZXWY"
+        DNSName: !GetAtt 'LoadBalancer.DNSName'
+
