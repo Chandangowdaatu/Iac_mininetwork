@@ -1,0 +1,218 @@
+Resources:   
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+      Tags:
+        - Key: Name
+          Value: My-VPC
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "10.0.1.0/24"
+      AvailabilityZone: "ap-south-1a"
+      MapPublicIpOnLaunch: true
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "10.0.2.0/24"
+      AvailabilityZone: "ap-south-1a"
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+
+  MyInternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref MyInternetGateway
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref MyInternetGateway
+
+  AssociatePublicSubnetRouteTable1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  NatGatewayEIP:
+    Type: AWS::EC2::EIP
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIP.AllocationId
+      SubnetId: !Ref PublicSubnet
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+    
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable
+
+
+  InstanceSecurityGroup1:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH and HTTP access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref MyVPC
+
+  Ec2Instance1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Jump_or_Bastion_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt update -y 
+          apt install nginx -y
+          service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup1
+          AssociatePublicIpAddress: true
+          SubnetId: !Ref PublicSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.1.10'
+
+
+  InstanceSecurityGroup2:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access for specific IP
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.1.10/32
+      VpcId: !Ref MyVPC
+
+  Ec2Instance2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Private_Frontend_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt update -y 
+          apt install apache2
+          service apache2 start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup2
+          SubnetId: !Ref PrivateSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.2.10'
+
+  InstanceSecurityGroup3:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access for specific IP
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.1.10/32
+      VpcId: !Ref MyVPC 
+
+
+  Ec2Instance3:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Private_Backend_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt update -y 
+          apt install nginx -y
+          service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup3
+          SubnetId: !Ref PrivateSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.2.20'
+
+  InstanceSecurityGroup4:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access for specific IP
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.1.10/32
+      VpcId: !Ref MyVPC
+
+  Ec2Instance4:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      KeyName: chandan  
+      ImageId: ami-0287a05f0ef0e9d9a
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Private_Mongo_Database_Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          apt update -y 
+          apt install nginx -y
+          service nginx start
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref InstanceSecurityGroup4
+          SubnetId: !Ref PrivateSubnet
+          DeviceIndex: 0
+          PrivateIpAddress: '10.0.2.30'
