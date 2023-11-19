@@ -8,7 +8,7 @@ This project creates a mini network using various AWS services.
 
 ## Architecture
 
-![Project Architecture]([https://drive.google.com/file/d/1M9u_ryvc2VYFFw2K-TYrXZ8J5p_bEHt4/view?usp=sharing](https://drive.google.com/file/d/1M9u_ryvc2VYFFw2K-TYrXZ8J5p_bEHt4/view))
+![Project Architecture](https://github.com/Chandangowdaatu/Iac_mininetwork/blob/master/Drawdotio/final.png)
 
 Provide a brief overview of the project's architecture. You can discuss the main components and how they interact.
 
